@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler'
 import { v2 as cloudinary } from 'cloudinary'
 import Product from '../models/productModel.js'
+import User from '../models/userModel.js'
 import Category from '../models/categoryModel.js'
 import Tag from '../models/tagModel.js'
 
@@ -78,7 +79,6 @@ const createProduct = asyncHandler(async (req, res) => {
     transformation: [{ width: 1000, height: 1000, crop: 'fill' }],
   })
 
-  console.log(result)
   const newProduct = new Product({
     user: req.user._id,
     name: product.name,
@@ -183,6 +183,76 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 })
 
+const createReview = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id)
+
+  const reviewer = await User.findById(req.user._id)
+
+  if (product) {
+    const hasReviewedProduct = product.reviews.find(
+      (review) => review.user.toString() === req.user._id.toString()
+    )
+
+    if (hasReviewedProduct) {
+      res.status(403)
+      throw new Error('User already reviewed the product')
+    } else {
+      const review = {
+        user: req.user._id,
+        name: reviewer.name,
+        rating: req.body.rating,
+        comment: req.body.comment,
+      }
+      product.reviews.push(review)
+
+      product.numReviews = product.reviews.length
+      product.rating = (
+        product.reviews.reduce((sum, review) => sum + review.rating, 0) /
+        product.numReviews
+      ).toFixed(2)
+
+      await product.save()
+
+      res.json(product.reviews[product.numReviews - 1])
+    }
+  } else {
+    res.status(404)
+    throw new Error('Product not found')
+  }
+})
+
+const removeReview = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id)
+
+  if (product) {
+    const reviewByUser = product.reviews.find(
+      (review) => review.user.toString() === req.user._id.toString()
+    )
+
+    if (reviewByUser) {
+      const reviewIndex = product.reviews.indexOf(reviewByUser)
+      const removedReview = product.reviews.splice(reviewIndex, 1)
+
+      product.numReviews = product.reviews.length
+
+      product.rating =
+        product.numReviews !== 0
+          ? (
+              (product.rating * (product.numReviews + 1) -
+                reviewByUser.rating) /
+              product.numReviews
+            ).toFixed(2)
+          : 0
+
+      await product.save()
+      res.json(removedReview)
+    } else {
+      res.status(404)
+      throw new Error('Review not found')
+    }
+  }
+})
+
 export {
   getProducts,
   getProductById,
@@ -190,4 +260,6 @@ export {
   updateProduct,
   getTopProducts,
   deleteProduct,
+  createReview,
+  removeReview,
 }

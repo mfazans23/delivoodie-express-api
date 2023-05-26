@@ -7,6 +7,8 @@ import {
   updateProduct,
   deleteProduct,
   getTopProducts,
+  createReview,
+  removeReview,
 } from '../controllers/productController.js'
 import upload from '../middleware/uploadMiddleware.js'
 
@@ -24,5 +26,10 @@ router
   .get(getProductById)
   .put(protect, admin, upload.single('image'), updateProduct)
   .delete(protect, admin, deleteProduct)
+
+router
+  .route('/:id/review')
+  .post(protect, createReview)
+  .delete(protect, removeReview)
 
 export default router
