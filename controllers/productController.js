@@ -183,6 +183,17 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 })
 
+const getProductReview = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id)
+
+  if (product) {
+    res.json(product.reviews)
+  } else {
+    res.status(404)
+    throw new Error('Product not found')
+  }
+})
+
 const createReview = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
 
@@ -260,6 +271,7 @@ export {
   updateProduct,
   getTopProducts,
   deleteProduct,
+  getProductReview,
   createReview,
   removeReview,
 }

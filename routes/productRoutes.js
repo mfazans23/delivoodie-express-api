@@ -7,6 +7,7 @@ import {
   updateProduct,
   deleteProduct,
   getTopProducts,
+  getProductReview,
   createReview,
   removeReview,
 } from '../controllers/productController.js'
@@ -29,6 +30,7 @@ router
 
 router
   .route('/:id/review')
+  .get(getProductReview)
   .post(protect, createReview)
   .delete(protect, removeReview)
 
