@@ -74,6 +74,7 @@ const getMyCart = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate(
     'shippingAddress'
   )
+
   if (cart) {
     res.json({
       user: req.user._id,

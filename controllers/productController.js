@@ -206,7 +206,7 @@ const createReview = asyncHandler(async (req, res) => {
 
     if (hasReviewedProduct) {
       res.status(403)
-      throw new Error('User already reviewed the product')
+      throw new Error('You already reviewed the product')
     } else {
       const review = {
         user: req.user._id,
@@ -232,16 +232,44 @@ const createReview = asyncHandler(async (req, res) => {
   }
 })
 
+const updateReview = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id)
+  const { rating, comment } = req.body
+
+  if (product) {
+    const userReview = product.reviews.find(
+      (review) => review.user.toString() === req.user._id.toString()
+    )
+
+    if (userReview) {
+      userReview.rating = rating || userReview.rating
+      userReview.comment = comment || userReview.comment
+
+      const updatedProduct = await product.save()
+      const updatedReview = updatedProduct.reviews.find(
+        (review) => review.user.toString() === req.user._id.toString()
+      )
+      res.json(updatedReview)
+    } else {
+      res.status(404)
+      throw new Error('Review not found')
+    }
+  } else {
+    res.status(404)
+    throw new Error('Product not found')
+  }
+})
+
 const removeReview = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
 
   if (product) {
-    const reviewByUser = product.reviews.find(
+    const userReview = product.reviews.find(
       (review) => review.user.toString() === req.user._id.toString()
     )
 
-    if (reviewByUser) {
-      const reviewIndex = product.reviews.indexOf(reviewByUser)
+    if (userReview) {
+      const reviewIndex = product.reviews.indexOf(userReview)
       const removedReview = product.reviews.splice(reviewIndex, 1)
 
       product.numReviews = product.reviews.length
@@ -249,8 +277,7 @@ const removeReview = asyncHandler(async (req, res) => {
       product.rating =
         product.numReviews !== 0
           ? (
-              (product.rating * (product.numReviews + 1) -
-                reviewByUser.rating) /
+              (product.rating * (product.numReviews + 1) - userReview.rating) /
               product.numReviews
             ).toFixed(2)
           : 0
@@ -273,5 +300,6 @@ export {
   deleteProduct,
   getProductReview,
   createReview,
+  updateReview,
   removeReview,
 }

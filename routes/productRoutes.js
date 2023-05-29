@@ -10,6 +10,7 @@ import {
   getProductReview,
   createReview,
   removeReview,
+  updateReview,
 } from '../controllers/productController.js'
 import upload from '../middleware/uploadMiddleware.js'
 
@@ -32,6 +33,7 @@ router
   .route('/:id/review')
   .get(getProductReview)
   .post(protect, createReview)
+  .put(protect, updateReview)
   .delete(protect, removeReview)
 
 export default router
