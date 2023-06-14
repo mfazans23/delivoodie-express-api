@@ -7,47 +7,44 @@ const addItemToCart = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id })
 
   if (cart) {
-    const item = cart.cartItems.find(
-      (item) => item.product.toString() === req.body.product
-    )
+    const itemsToAdd = req.body.items // Array of items to be added
 
-    if (item) {
-      item.qty = req.body.qty
-    } else {
-      cart.cartItems.unshift({
-        product: mongoose.Types.ObjectId(req.body.product),
-        name: req.body.name,
-        price: req.body.price,
-        countInStock: req.body.countInStock,
-        image: req.body.image,
-        qty: req.body.qty,
-      })
+    for (const newItem of itemsToAdd) {
+      const item = cart.cartItems.find(
+        (item) => item.product.toString() === newItem.product
+      )
+
+      if (item) {
+        item.qty = newItem.qty
+      } else {
+        cart.cartItems.unshift({
+          product: mongoose.Types.ObjectId(newItem.product),
+          name: newItem.name,
+          price: newItem.price,
+          countInStock: newItem.countInStock,
+          image: newItem.image,
+          qty: newItem.qty,
+        })
+      }
     }
 
     await cart.save()
-    res.json(
-      cart.cartItems.find(
-        (item) => item.product.toString() === req.body.product
-      )
-    )
+    res.json(cart.cartItems)
   } else {
     const newCart = new Cart({
       user: req.user._id,
-      cartItems: [
-        {
-          product: mongoose.Types.ObjectId(req.body.product),
-          name: req.body.name,
-          price: req.body.price,
-          countInStock: req.body.countInStock,
-          image: req.body.image,
-          qty: req.body.qty,
-        },
-      ],
+      cartItems: req.body.items.map((newItem) => ({
+        product: mongoose.Types.ObjectId(newItem.product),
+        name: newItem.name,
+        price: newItem.price,
+        countInStock: newItem.countInStock,
+        image: newItem.image,
+        qty: newItem.qty,
+      })),
     })
 
     await newCart.save()
-
-    res.json(newCart.cartItems[0])
+    res.json(newCart.cartItems)
   }
 })
 
