@@ -1,6 +1,7 @@
 import express from 'express'
 import {
   addItemToCart,
+  addItemsToCart,
   getMyCart,
   removeItemFromCart,
   removeCart,
