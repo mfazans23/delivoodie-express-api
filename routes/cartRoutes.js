@@ -15,6 +15,7 @@ router
   .post(protect, addItemToCart)
   .get(protect, getMyCart)
   .delete(protect, removeCart)
+router.post('/items', protect, addItemsToCart)
 router.route('/item/:product').delete(protect, removeItemFromCart)
 router.route('/shippingaddress').put(protect, setShippingAddress)
 

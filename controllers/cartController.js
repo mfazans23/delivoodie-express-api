@@ -7,7 +7,56 @@ const addItemToCart = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id })
 
   if (cart) {
+    const item = cart.cartItems.find(
+      (item) => item.product.toString() === req.body.product
+    )
+
+    if (item) {
+      item.qty = req.body.qty
+    } else {
+      cart.cartItems.unshift({
+        product: mongoose.Types.ObjectId(req.body.product),
+        name: req.body.name,
+        price: req.body.price,
+        countInStock: req.body.countInStock,
+        image: req.body.image,
+        qty: req.body.qty,
+      })
+    }
+
+    await cart.save()
+    res.json(
+      cart.cartItems.find(
+        (item) => item.product.toString() === req.body.product
+      )
+    )
+  } else {
+    const newCart = new Cart({
+      user: req.user._id,
+      cartItems: [
+        {
+          product: mongoose.Types.ObjectId(req.body.product),
+          name: req.body.name,
+          price: req.body.price,
+          countInStock: req.body.countInStock,
+          image: req.body.image,
+          qty: req.body.qty,
+        },
+      ],
+    })
+
+    await newCart.save()
+
+    res.json(newCart.cartItems[0])
+  }
+})
+
+const addItemsToCart = asyncHandler(async (req, res) => {
+  const cart = await Cart.findOne({ user: req.user._id })
+
+  if (cart) {
     const itemsToAdd = req.body.items // Array of items to be added
+    console.log(itemsToAdd)
 
     for (const newItem of itemsToAdd) {
       const item = cart.cartItems.find(
@@ -120,6 +169,7 @@ const removeCart = asyncHandler(async (req, res) => {
 
 export {
   addItemToCart,
+  addItemsToCart,
   getMyCart,
   removeItemFromCart,
   setShippingAddress,
